@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .form-group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .form-control-small {
+            width: 60px; /* Adjust the width as needed */
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Text to Image Generator</h1>
+
+        <form id="text-form">
+            <div class="form-group">
+                <label for="user-text">Enter Text:</label>
+                <input type="text" class="form-control" id="user-text" name="user_text" required>
+            </div>
+
+            <div class="form-group">
+                <label for="width">Width:</label>
+                <input type="range" class="form-range" id="width" name="width" min="0" max="5000" value="500">
+                <input type="number" class="form-control form-control-small" id="width-value" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="height">Height:</label>
+                <input type="range" class="form-range" id="height" name="height" min="0" max="5000" value="500">
+                <input type="number" class="form-control form-control-small" id="height-value" readonly>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="generateImage()">Generate Image</button>
+        </form>
+
+        <div id="loading-spinner" class="mt-3" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+
+        <div id="result-container" class="mt-4">
+            <img id="generated-image" class="img-fluid" alt="Generated Image">
+        </div>
+
+        <!-- Queue Progress Bar -->
+        <div class="mt-4">
+            <h5>Queue Progress</h5>
+            <div class="progress">
+                <div id="queue-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userTextInput = document.getElementById('user-text');
+        const widthInput = document.getElementById('width');
+        const widthValueInput = document.getElementById('width-value');
+        const heightInput = document.getElementById('height');
+        const heightValueInput = document.getElementById('height-value');
+
+        widthInput.addEventListener('input', updateWidthValue);
+        heightInput.addEventListener('input', updateHeightValue);
+
+        function updateWidthValue() {
+            widthValueInput.value = widthInput.value;
+        }
+
+        function updateHeightValue() {
+            heightValueInput.value = heightInput.value;
+        }
+
+        async function generateImage() {
+            const userText = userTextInput.value;
+            const width = widthInput.value;
+            const height = heightInput.value;
+
+            document.getElementById('loading-spinner').style.display = 'block';
+
+            try {
+                // Prepare the request body
+                const requestBody = {
+                    prompt: userText,
+                    width: parseInt(width),
+                    height: parseInt(height),
+                    // Include other parameters from your request body as needed
+                    // styles: ["string"],
+                    // seed: -1,
+                    // Add more parameters here...
+                };
+
+                // Send the request to the server for image generation
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                const result = await response.json();
+                document.getElementById('generated-image').src = `data:image/png;base64,${result.base64_image}`;
+            } finally {
+                document.getElementById('loading-spinner').style.display = 'none';
+            }
+        }
+
+        // Function to fetch queue status and update progress bar
+        async function fetchQueueStatus() {
+            try {
+                const response = await fetch('http://37.60.173.43:8080/queue/status', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                const queueStatus = await response.json();
+                const progress = queueStatus.rank / queueStatus.queue_size * 100;
+
+                updateQueueProgress(progress);
+            } catch (error) {
+                console.error('Error fetching queue status:', error);
+            }
+        }
+
+        // Update queue progress every 5 seconds (adjust as needed)
+        setInterval(fetchQueueStatus, 5000);
+
+        // Function to update the queue progress bar
+        function updateQueueProgress(progress) {
+            const progressBar = document.getElementById('queue-progress-bar');
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

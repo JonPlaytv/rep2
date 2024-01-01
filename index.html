@@ -1,0 +1,56 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image Generator</title>
+</head>
+<body>
+    <h1>Text to Image Generator</h1>
+    
+    <form id="text-form" action="/generate" method="post">
+        <!-- Make sure the 'name' attribute is set to 'user_text' -->
+        <label for="user_text">Enter Text:</label>
+        <input type="text" id="user_text" name="user_text" required>
+        <button type="submit">Generate Image</button>
+    </form>
+
+    <!-- Display the generated image here -->
+    <div id="result-container">
+        <h2>Generated Image</h2>
+        <img id="generated-image" src="" alt="Generated Image">
+    </div>
+
+    <script>
+        const textForm = document.getElementById('text-form');
+        const userTextInput = document.getElementById('user_text');
+        const generatedImage = document.getElementById('generated-image');
+
+        textForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const userText = userTextInput.value;
+
+            try {
+                // Make a request to your FastAPI endpoint
+                const response = await fetch('http://37.60.173.43:8080/sdapi/v1/txt2img', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: userText }),
+                });
+
+                const result = await response.json();
+
+                // Update the 'src' attribute of the generated image
+                generatedImage.src = `data:image/png;base64,${result.base64_image}`;
+            } catch (error) {
+                console.error('Error generating image:', error);
+            }
+        });
+    </script>
+</body>
+</html>
