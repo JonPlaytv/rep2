@@ -34,19 +34,23 @@
             const userText = userTextInput.value;
 
             try {
-                // Make a request to your FastAPI endpoint
-                const response = await fetch('http://37.60.173.43:8080/sdapi/v1/txt2img', {
+                // Make a request to your Flask endpoint
+                const response = await fetch('/generate', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: JSON.stringify({ text: userText }),
+                    body: `user_text=${encodeURIComponent(userText)}`,
                 });
 
                 const result = await response.json();
 
-                // Update the 'src' attribute of the generated image
-                generatedImage.src = `data:image/png;base64,${result.base64_image}`;
+                if ('base64_image' in result) {
+                    // Update the 'src' attribute of the generated image
+                    generatedImage.src = `data:image/png;base64,${result.base64_image}`;
+                } else if ('error' in result) {
+                    console.error('Error generating image:', result.error);
+                }
             } catch (error) {
                 console.error('Error generating image:', error);
             }
