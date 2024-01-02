@@ -113,7 +113,10 @@
                 <label for="height">Height:</label>
                 <input type="number" class="field" id="height" name="height" min="0" max="5000" value="512">
             </div>
-
+            <div class="field">
+                <label for="steps">Steps:</label>
+                <input type="number" class="field" id="steps" name="Steps" min="0" max="50" value="20">
+            </div>
             <button class="ui button primary" type="button" onclick="generateImage()">Generate Image</button>
         </form>
 
@@ -133,12 +136,14 @@
         const negativePromptInput = document.getElementById('negative-prompt');
         const widthInput = document.getElementById('width');
         const heightInput = document.getElementById('height');
+        const stepsInput = document.getElementById('steps');
 
         async function generateImage() {
             const userText = userTextInput.value;
             const negativePrompt = negativePromptInput.value;
             const width = widthInput.value;
             const height = heightInput.value;
+            const steps = stepsInput.value;
 
             document.getElementById('loading-spinner').style.display = 'block';
 
@@ -149,6 +154,7 @@
                     negative_prompt: negativePrompt,
                     width: parseInt(width),
                     height: parseInt(height),
+                    steps: parseInt(steps)
                 };
 
                 // Send the request to the server for image generation
