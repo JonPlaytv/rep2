@@ -37,6 +37,15 @@
             width: 120px;
         }
 
+        .small-download-button {
+            font-size: 12px;
+            padding: 20px; /* Adjusted padding */
+            width:200px; /* Set a specific width */
+        }
+
+
+
+
         .field textarea,
         .field input[type="number"] {
             width: calc(100% - 130px); /* Adjusted width to make space for the seed field */
@@ -50,7 +59,7 @@
         }
 
         .ui.button {
-            width: 100%;
+            width: 50%;
             padding: 15px;
             box-sizing: border-box;
         }
@@ -74,6 +83,11 @@
             height: auto;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #download-button {
+            margin-top: 20px;
+            width:20px;
         }
 
         #loading-spinner {
@@ -136,9 +150,9 @@
                 <div class="ui large text loader">Loading</div>
             </div>
         </div>
-
         <div id="result-container">
             <img id="generated-image" class="ui image" alt="Generated Image">
+            <button class="ui button primary mt-3 small-download-button" onclick="downloadImage()">Download Image</button>
         </div>
     </div>
 
@@ -149,7 +163,7 @@
         const heightInput = document.getElementById('height');
         const stepsInput = document.getElementById('steps');
         const seedInput = document.getElementById('seed');
-
+    
         async function generateImage() {
             const userText = userTextInput.value;
             const negativePrompt = negativePromptInput.value;
@@ -158,7 +172,7 @@
             const steps = stepsInput.value;
             const seed = seedInput.value;
             document.getElementById('loading-spinner').style.display = 'block';
-
+    
             try {
                 // Prepare the request body
                 const requestBody = {
@@ -169,7 +183,7 @@
                     steps: parseInt(steps),
                     seed: parseInt(seed)
                 };
-
+    
                 // Send the request to the server for image generation
                 const response = await fetch('/generate', {
                     method: 'POST',
@@ -178,15 +192,27 @@
                     },
                     body: JSON.stringify(requestBody),
                 });
-
+    
                 const result = await response.json();
-                document.getElementById('generated-image').src = `data:image/png;base64,${result.images[0]}`;
+                const generatedImage = document.getElementById('generated-image');
+                generatedImage.src = `data:image/png;base64,${result.images[0]}`;
                 document.getElementById('result-container').style.display = 'block';
+    
+                // Show the download button
+                document.getElementById('download-button').style.display = 'block';
             } catch (error) {
                 console.error(error);
             } finally {
                 document.getElementById('loading-spinner').style.display = 'none';
             }
+        }
+    
+        function downloadImage() {
+            const imageData = document.getElementById('generated-image').src.split(",")[1];
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${imageData}`;
+            link.download = 'generated_image.png';
+            link.click();
         }
     </script>
 </body>
