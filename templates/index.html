@@ -6,6 +6,7 @@
     <title>Text to Image Generator</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+
         body {
             background-color: #f8f9fa;
         }
@@ -68,6 +69,17 @@
 
         #queue-progress-bar {
             border-radius: 0;
+
+        .form-group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .form-control-small {
+            width: 60px; /* Adjust the width as needed */
+            margin-left: 10px;
+
         }
     </style>
 </head>
@@ -77,6 +89,7 @@
 
         <form id="text-form">
             <div class="form-group">
+
                 <label for="user-text">Prompt:</label>
                 <textarea class="form-control form-control-large" id="user-text" name="user_text" required></textarea>
             </div>
@@ -84,28 +97,47 @@
             <div class="form-group">
                 <label for="negative-prompt">Negative Prompt:</label>
                 <textarea class="form-control form-control-large" id="negative-prompt" name="negative_prompt"></textarea>
+
+                
+
             </div>
 
             <div class="form-group">
                 <label for="width">Width:</label>
+
                 <input type="number" class="form-control form-control-small" id="width" name="width" min="0" max="5000" value="512">
+
+                
+                
+
             </div>
 
             <div class="form-group">
                 <label for="height">Height:</label>
+
                 <input type="number" class="form-control form-control-small" id="height" name="height" min="0" max="5000" value="512">
+
+                
+                
             </div>
 
             <button type="button" class="btn btn-primary" onclick="generateImage()">Generate Image</button>
         </form>
 
         <div id="loading-spinner" style="display: none;">
+
+        <div id="loading-spinner" class="mt-3" style="display: none;">
+
             <div class="spinner-border text-primary" role="status">
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
 
+
         <div id="result-container" style="display: none;">
+
+        <div id="result-container" class="mt-4">
+
             <img id="generated-image" class="img-fluid" alt="Generated Image">
         </div>
 
@@ -117,6 +149,7 @@
             </div>
         </div>
     </div>
+
 
    <script>
     const userTextInput = document.getElementById('user-text');
@@ -194,3 +227,12 @@
 </script>
 
       
+
+    
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
