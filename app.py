@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 import requests
+from gevent.pywsgi import WSGIServer
+
 
 app = Flask(__name__)
 
@@ -24,7 +26,7 @@ def generate():
         seed = request.json.get('seed')  # Use request.json instead of request.form
         # Make a request to your FastAPI endpoint
         response = requests.post('http://37.60.173.43:8080/sdapi/v1/txt2img', json={
-            'text': user_text,
+            'prompt': user_text,
             'width': width,
             'height': height,
             'negative_prompt': negative_prompt,
@@ -54,5 +56,10 @@ def queue_status():
     # Return the response from the external server
     return jsonify(response.json())
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Debug/Development
+    # app.run(debug=True, host="0.0.0.0", port="5000")
+    # Production
+    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server.serve_forever()
