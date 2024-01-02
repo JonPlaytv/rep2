@@ -21,7 +21,7 @@ def generate():
         height = request.json.get('height')
         negative_prompt = request.json.get('negative_prompt')
         steps = request.json.get('steps')  # Use request.json instead of request.form
-
+        seed = request.json.get('seed')  # Use request.json instead of request.form
         # Make a request to your FastAPI endpoint
         response = requests.post('http://37.60.173.43:8080/sdapi/v1/txt2img', json={
             'text': user_text,
@@ -29,6 +29,7 @@ def generate():
             'height': height,
             'negative_prompt': negative_prompt,
             'steps': steps,
+            'seed' : seed
         })
 
         # Check if the request was successful (status code 200)
