@@ -39,7 +39,7 @@
 
         .field textarea,
         .field input[type="number"] {
-            width: 100%;
+            width: calc(100% - 130px); /* Adjusted width to make space for the seed field */
             padding: 15px;
             box-sizing: border-box;
         }
@@ -117,14 +117,17 @@
                 <label for="height">Height:</label>
                 <input type="number" class="field" id="height" name="height" min="0" max="5000" value="512">
             </div>
+
             <div class="field">
                 <label for="steps">Steps:</label>
                 <input type="number" class="field" id="steps" name="Steps" min="0" max="50" value="20">
             </div>
+
             <div class="field">
                 <label for="seed">Seed:</label>
                 <input type="number" class="field" id="seed" name="Seed" min="0" value="-1">
             </div>
+
             <button class="ui button primary" type="button" onclick="generateImage()">Generate Image</button>
         </form>
 
@@ -146,46 +149,45 @@
         const heightInput = document.getElementById('height');
         const stepsInput = document.getElementById('steps');
         const seedInput = document.getElementById('seed');
-        const generateButton = document.getElementById('generate-button');
-        
+
         async function generateImage() {
-    const userText = userTextInput.value;
-    const negativePrompt = negativePromptInput.value;
-    const width = widthInput.value;
-    const height = heightInput.value;
-    const steps = stepsInput.value;
-    const seed = seedInput.value;
-    document.getElementById('loading-spinner').style.display = 'block';
+            const userText = userTextInput.value;
+            const negativePrompt = negativePromptInput.value;
+            const width = widthInput.value;
+            const height = heightInput.value;
+            const steps = stepsInput.value;
+            const seed = seedInput.value;
+            document.getElementById('loading-spinner').style.display = 'block';
 
-    try {
-        // Prepare the request body
-        const requestBody = {
-            prompt: userText,
-            negative_prompt: negativePrompt,
-            width: parseInt(width),
-            height: parseInt(height),
-            steps: parseInt(steps),  // Add comma here
-            seed: parseInt(seed)
-        };
+            try {
+                // Prepare the request body
+                const requestBody = {
+                    prompt: userText,
+                    negative_prompt: negativePrompt,
+                    width: parseInt(width),
+                    height: parseInt(height),
+                    steps: parseInt(steps),
+                    seed: parseInt(seed)
+                };
 
-        // Send the request to the server for image generation
-        const response = await fetch('/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
+                // Send the request to the server for image generation
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
 
-        const result = await response.json();
-        document.getElementById('generated-image').src = `data:image/png;base64,${result.images[0]}`
-
-    } catch (error) {
-        console.log(error);
-    } finally {
-        document.getElementById('loading-spinner').style.display = 'none';
-    }
-}
+                const result = await response.json();
+                document.getElementById('generated-image').src = `data:image/png;base64,${result.images[0]}`;
+                document.getElementById('result-container').style.display = 'block';
+            } catch (error) {
+                console.error(error);
+            } finally {
+                document.getElementById('loading-spinner').style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
