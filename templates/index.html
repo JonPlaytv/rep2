@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px; /* Adjusted padding for longer input boxes */
+            box-sizing: border-box;
+        }
+
+        .form-control-large {
+            height: 100px; /* Adjusted height for the larger input box */
+            resize: vertical; /* Allow vertical resizing */
+        }
+
+        .form-control-small {
+            width: 100%; /* Adjusted width for the smaller input box */
+            padding: 15px; /* Adjusted padding for consistency */
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px; /* Adjusted padding for the button */
+            box-sizing: border-box;
+        }
+
+        #loading-spinner {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #result-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #generated-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #queue-progress-bar {
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Text to Image Generator</h1>
+
+        <form id="text-form">
+            <div class="form-group">
+                <label for="user-text">Prompt:</label>
+                <textarea class="form-control form-control-large" id="user-text" name="user_text" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="negative-prompt">Negative Prompt:</label>
+                <textarea class="form-control form-control-large" id="negative-prompt" name="negative_prompt"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="width">Width:</label>
+                <input type="number" class="form-control form-control-small" id="width" name="width" min="0" max="5000" value="512">
+            </div>
+
+            <div class="form-group">
+                <label for="height">Height:</label>
+                <input type="number" class="form-control form-control-small" id="height" name="height" min="0" max="5000" value="512">
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="generateImage()">Generate Image</button>
+        </form>
+
+        <div id="loading-spinner" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+
+        <div id="result-container" style="display: none;">
+            <img id="generated-image" class="img-fluid" alt="Generated Image">
+        </div>
+
+        <!-- Queue Progress Bar -->
+        <div class="mt-4">
+            <h5>Queue Progress</h5>
+            <div class="progress">
+                <div id="queue-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+   <script>
+    const userTextInput = document.getElementById('user-text');
+    const negativePromptInput = document.getElementById('negative-prompt');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+
+    async function generateImage() {
+        const userText = userTextInput.value;
+        const negativePrompt = negativePromptInput.value;
+        const width = widthInput.value;
+        const height = heightInput.value;
+
+        document.getElementById('loading-spinner').style.display = 'block';
+
+        try {
+            // Prepare the request body
+            const requestBody = {
+                prompt: userText,
+                negative_prompt: negativePrompt,
+                width: parseInt(width),
+                height: parseInt(height),
+                // Add other parameters as needed
+            };
+
+            // Send the request to the server for image generation
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            const result = await response.json();
+            document.getElementById('generated-image').src = `data:image/png;base64,${result.images[0]}`;
+            document.getElementById('result-container').style.display = 'block';
+        } finally {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
+    }
+
+    // Function to fetch queue status and update progress bar
+    async function fetchQueueStatus() {
+        try {
+            const response = await fetch('http://37.60.173.43:8080/queue/status', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
+
+            const queueStatus = await response.json();
+            
+            if (queueStatus.rank !== null) {
+                const progress = queueStatus.rank / queueStatus.queue_size * 100;
+                updateQueueProgress(progress);
+            } else {
+                console.log('Queue status not available.');
+            }
+        } catch (error) {
+            console.error('Error fetching queue status:', error);
+        }
+    }
+
+    // Update queue progress every 5 seconds (adjust as needed)
+    setInterval(fetchQueueStatus, 1000);
+
+    // Function to update the queue progress bar
+    function updateQueueProgress(progress) {
+        const progressBar = document.getElementById('queue-progress-bar');
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+    }
+</script>
+
+      
