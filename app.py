@@ -42,11 +42,7 @@ def generate():
 
         return jsonify({'images': base64_image})
 
-    except requests.RequestException as e:
-        return jsonify({'error': f'Error making API request: {e}'}), 500
-
-    except Exception as e:
-        return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
+   
 
 @app.route('/queue/status')
 def queue_status():
