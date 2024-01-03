@@ -44,8 +44,6 @@
         }
 
 
-
-
         .field textarea,
         .field input[type="number"] {
             width: calc(100% - 130px); /* Adjusted width to make space for the seed field */
@@ -59,7 +57,7 @@
         }
 
         .ui.button {
-            width: 50%;
+            width: 100%;
             padding: 15px;
             box-sizing: border-box;
         }
@@ -105,6 +103,14 @@
         .ui.form .field:first-child {
             margin-top: 0;
         }
+
+        .nsfw-box {
+            margin-top: 20px;
+        }
+
+        .nsfw-box input {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -142,6 +148,11 @@
                 <input type="number" class="field" id="seed" name="Seed" min="0" value="-1">
             </div>
 
+            <div class="nsfw-box">
+                <label for="nsfw">NSFW:</label>
+                <input type="checkbox" id="nsfw" name="nsfw">
+            </div>
+
             <button class="ui button primary" type="button" onclick="generateImage()">Generate Image</button>
         </form>
 
@@ -163,6 +174,7 @@
         const heightInput = document.getElementById('height');
         const stepsInput = document.getElementById('steps');
         const seedInput = document.getElementById('seed');
+        const nsfwInput = document.getElementById('nsfw');
     
         async function generateImage() {
             const userText = userTextInput.value;
@@ -171,6 +183,7 @@
             const height = heightInput.value;
             const steps = stepsInput.value;
             const seed = seedInput.value;
+            const nsfw = nsfwInput.checked;
             document.getElementById('loading-spinner').style.display = 'block';
     
             try {
@@ -181,7 +194,8 @@
                     width: parseInt(width),
                     height: parseInt(height),
                     steps: parseInt(steps),
-                    seed: parseInt(seed)
+                    seed: parseInt(seed),
+                    nsfw: nsfw
                 };
     
                 // Send the request to the server for image generation
@@ -195,23 +209,19 @@
     
                 const result = await response.json();
                 const generatedImage = document.getElementById('generated-image');
-                generatedImage.src = `data:image/png;base64,${result.images[0]}`;
-                document.getElementById('result-container').style.display = 'block';
-    
-                // Show the download button
-                document.getElementById('download-button').style.display = 'block';
+                generatedImage.src = `data:image/png;base64,${result.images[0]}`
             } catch (error) {
                 console.error(error);
-            } finally {
                 document.getElementById('loading-spinner').style.display = 'none';
             }
         }
     
         function downloadImage() {
-            const imageData = document.getElementById('generated-image').src.split(",")[1];
+            const generatedImage = document.getElementById('generated-image');
+            const imageURL = generatedImage.src;
             const link = document.createElement('a');
-            link.href = `data:image/png;base64,${imageData}`;
-            link.download = 'generated_image.png';
+            link.href = imageURL;
+            link.download = 'generated-image.png';
             link.click();
         }
     </script>

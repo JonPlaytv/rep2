@@ -56,6 +56,30 @@ def queue_status():
     # Return the response from the external server
     return jsonify(response.json())
 
+app.route('/nudenet/censor', methods=['POST'])
+def nsfw():
+    try:
+        # Get user input from the request
+        nsfw = request.json.get('nsfw')
+       
+        response = requests.post('http://37.60.173.43:8080/nudenet/censor', json={
+            'enable_nudenet': nsfw,
+            
+        })
+
+        return jsonify({'success': True})
+
+    except requests.RequestException as e:
+        return jsonify({'error': f'Error making API request: {e}'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
+
+
+
+
+
+
 
 if __name__ == '__main__':
     # Debug/Development
