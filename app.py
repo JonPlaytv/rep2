@@ -1,219 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text to Image Generator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        .ui.container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #000000;
-        }
-
-        .field {
-            margin-bottom: 20px;
-        }
-
-        .field:last-child {
-            margin-bottom: 0;
-        }
-
-        .field label {
-            display: inline-block;
-            margin-right: 10px;
-            text-align: right;
-            width: 120px;
-        }
-
-        .small-download-button {
-            font-size: 12px;
-            padding: 20px; /* Adjusted padding */
-            width:200px; /* Set a specific width */
-        }
+from flask import Flask, render_template, request, jsonify, send_from_directory
+import os
+import requests
+from gevent.pywsgi import WSGIServer
 
 
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    try:
+        # Get user input from the request
+        user_text = request.json.get('prompt')
+        width = request.json.get('width')
+        height = request.json.get('height')
+        negative_prompt = request.json.get('negative_prompt')
+        steps = request.json.get('steps')  # Use request.json instead of request.form
+        seed = request.json.get('seed')  # Use request.json instead of request.form
+        # Make a request to your FastAPI endpoint
+        response = requests.post('http://37.60.173.43:8080/sdapi/v1/txt2img', json={
+            'prompt': user_text,
+            'width': width,
+            'height': height,
+            'negative_prompt': negative_prompt,
+            'steps': steps,
+            'seed' : seed
+        })
+
+        # Check if the request was successful (status code 200)
+        response.raise_for_status()
+
+        # Assume the API responds with an image encoded in base64
+        base64_image = response.json().get('images')
+
+        return jsonify({'images': base64_image})
+
+    except requests.RequestException as e:
+        return jsonify({'error': f'Error making API request: {e}'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
+
+@app.route('/queue/status')
+def queue_status():
+    # Make a request to the external server for queue status
+    response = requests.get('http://37.60.173.43:8080/queue/status')
+
+    # Return the response from the external server
+    return jsonify(response.json())
 
 
-        .field textarea,
-        .field input[type="number"] {
-            width: calc(100% - 130px); /* Adjusted width to make space for the seed field */
-            padding: 15px;
-            box-sizing: border-box;
-        }
-
-        .field textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        .ui.button {
-            width: 100%;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-
-        #loading-spinner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-        }
-
-        #result-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        #generated-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        #download-button {
-            margin-top: 20px;
-            width:20px;
-        }
-
-        #loading-spinner {
-            display: none;
-        }
-
-        #result-container {
-            display: none;
-        }
-
-        .ui.form .field:not(:first-child) {
-            margin-top: 10px;
-        }
-
-        .ui.form .field:first-child {
-            margin-top: 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="ui container mt-5">
-        <h1>Text to Image Generator</h1>
-
-        <form class="ui form" id="text-form">
-            <div class="field">
-                <label for="user-text">Prompt:</label>
-                <textarea class="field" id="user-text" name="user_text" required></textarea>
-            </div>
-
-            <div class="field">
-                <label for="negative-prompt">Negative Prompt:</label>
-                <textarea class="field" id="negative-prompt" name="negative_prompt"></textarea>
-            </div>
-
-            <div class="field">
-                <label for="width">Width:</label>
-                <input type="number" class="field" id="width" name="width" min="0" max="5000" value="512">
-            </div>
-
-            <div class="field">
-                <label for="height">Height:</label>
-                <input type="number" class="field" id="height" name="height" min="0" max="5000" value="512">
-            </div>
-
-            <div class="field">
-                <label for="steps">Steps:</label>
-                <input type="number" class="field" id="steps" name="Steps" min="0" max="50" value="20">
-            </div>
-
-            <div class="field">
-                <label for="seed">Seed:</label>
-                <input type="number" class="field" id="seed" name="Seed" min="0" value="-1">
-            </div>
-
-            <button class="ui button primary" type="button" onclick="generateImage()">Generate Image</button>
-        </form>
-
-        <div id="loading-spinner">
-            <div class="ui active inverted dimmer">
-                <div class="ui large text loader">Loading</div>
-            </div>
-        </div>
-        <div id="result-container">
-            <img id="generated-image" class="ui image" alt="Generated Image">
-            <button class="ui button primary mt-3 small-download-button" onclick="downloadImage()">Download Image</button>
-        </div>
-    </div>
-
-    <script>
-        const userTextInput = document.getElementById('user-text');
-        const negativePromptInput = document.getElementById('negative-prompt');
-        const widthInput = document.getElementById('width');
-        const heightInput = document.getElementById('height');
-        const stepsInput = document.getElementById('steps');
-        const seedInput = document.getElementById('seed');
-    
-        async function generateImage() {
-            const userText = userTextInput.value;
-            const negativePrompt = negativePromptInput.value;
-            const width = widthInput.value;
-            const height = heightInput.value;
-            const steps = stepsInput.value;
-            const seed = seedInput.value;
-            document.getElementById('loading-spinner').style.display = 'block';
-    
-            try {
-                // Prepare the request body
-                const requestBody = {
-                    prompt: userText,
-                    negative_prompt: negativePrompt,
-                    width: parseInt(width),
-                    height: parseInt(height),
-                    steps: parseInt(steps),
-                    seed: parseInt(seed)
-                };
-    
-                // Send the request to the server for image generation
-                const response = await fetch('/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-    
-                const result = await response.json();
-                const generatedImage = document.getElementById('generated-image');
-                generatedImage.src = `data:image/png;base64,${result.images[0]}`;
-                document.getElementById('result-container').style.display = 'block';
-    
-                // Show the download button
-                document.getElementById('download-button').style.display = 'block';
-            } catch (error) {
-                console.error(error);
-            } finally {
-                document.getElementById('loading-spinner').style.display = 'none';
-            }
-        }
-    
-        function downloadImage() {
-            const imageData = document.getElementById('generated-image').src.split(",")[1];
-            const link = document.createElement('a');
-            link.href = `data:image/png;base64,${imageData}`;
-            link.download = 'generated_image.png';
-            link.click();
-        }
-    </script>
-</body>
-</html>
+if __name__ == '__main__':
+    # Debug/Development
+    # app.run(debug=True, host="0.0.0.0", port="5000")
+    # Production
+    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server.serve_forever()
