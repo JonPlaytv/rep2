@@ -40,11 +40,8 @@
         .small-download-button {
             font-size: 12px;
             padding: 20px; /* Adjusted padding */
-            width:200px; /* Set a specific width */
+            width: 200px; /* Set a specific width */
         }
-
-
-
 
         .field textarea,
         .field input[type="number"] {
@@ -87,13 +84,12 @@
 
         #download-button {
             margin-top: 20px;
-            width:20px;
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
         }
 
-        #loading-spinner {
-            display: none;
-        }
-
+        #loading-spinner,
         #result-container {
             display: none;
         }
@@ -142,6 +138,21 @@
                 <input type="number" class="field" id="seed" name="Seed" min="0" value="-1">
             </div>
 
+            <div class="field">
+                <label for="nsfw">NSFW Censoring:</label>
+                <input type="checkbox" class="field" id="nsfw" name="nsfw" checked>
+            </div>
+            
+            <div class="field">
+                <label for="style">Style:</label>
+                <select class="ui dropdown" id="style" name="style">
+                    <option value="">Select a style</option>
+                    <option value="anime">Anime</option>
+                    <option value="real">Realistic</option>
+                    <option value="cartoon">Cartoon</option>                   
+                </select>
+            </div>
+            
             <button class="ui button primary" type="button" onclick="generateImage()">Generate Image</button>
         </form>
 
@@ -152,7 +163,7 @@
         </div>
         <div id="result-container">
             <img id="generated-image" class="ui image" alt="Generated Image">
-            <button class="ui button primary mt-3 small-download-button" onclick="downloadImage()">Download Image</button>
+            <button id="download-button" class="ui button primary mt-3 small-download-button" onclick="downloadImage()">Download Image</button>
         </div>
     </div>
 
@@ -163,7 +174,11 @@
         const heightInput = document.getElementById('height');
         const stepsInput = document.getElementById('steps');
         const seedInput = document.getElementById('seed');
-    
+        const generatedImage = document.getElementById('generated-image');
+        const resultContainer = document.getElementById('result-container');
+        const nsfwInput = document.getElementById('nsfw');
+        const styleInput = document.getElementById('style');
+
         async function generateImage() {
             const userText = userTextInput.value;
             const negativePrompt = negativePromptInput.value;
@@ -171,49 +186,87 @@
             const height = heightInput.value;
             const steps = stepsInput.value;
             const seed = seedInput.value;
+            const nsfw = nsfwInput.checked;
+            const style = styleInput.value;
+            
             document.getElementById('loading-spinner').style.display = 'block';
-    
+
             try {
-                // Prepare the request body
+                
+
+                
+
                 const requestBody = {
                     prompt: userText,
                     negative_prompt: negativePrompt,
                     width: parseInt(width),
                     height: parseInt(height),
                     steps: parseInt(steps),
-                    seed: parseInt(seed)
+                    seed: parseInt(seed),
+                    nsfw: nsfw,
+                    sampler_name: "DPM++ 2M Karras",
+                    style: style,
+                    
                 };
-    
-                // Send the request to the server for image generation
-                const response = await fetch('/generate', {
+                
+                const optionBody = {
+                    sd_model_checkpoint: style,
+                    
+                    
+                    
+                };
+                
+                
+                
+                
+                
+                
+                const optionsEndpoint = '/options';
+                const optionsResponse = await fetch(optionsEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(optionBody),
+                });
+                
+                
+                
+                
+                
+                
+                // Continue with the request to generate image
+                const generateEndpoint = '/generate';
+                const generateResponse = await fetch(generateEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(requestBody),
                 });
-    
-                const result = await response.json();
-                const generatedImage = document.getElementById('generated-image');
-                generatedImage.src = `data:image/png;base64,${result.images[0]}`;
-                document.getElementById('result-container').style.display = 'block';
-    
-                // Show the download button
-                document.getElementById('download-button').style.display = 'block';
+
+                const result = await generateResponse.json();
+                const base64Image = result.images[0];
+
+                // Set the source of the image
+                generatedImage.src = `data:image/png;base64,${base64Image}`;
+                resultContainer.style.display = 'block'; // Show the result container
+
             } catch (error) {
                 console.error(error);
             } finally {
                 document.getElementById('loading-spinner').style.display = 'none';
             }
         }
-    
-        function downloadImage() {
-            const imageData = document.getElementById('generated-image').src.split(",")[1];
-            const link = document.createElement('a');
-            link.href = `data:image/png;base64,${imageData}`;
-            link.download = 'generated_image.png';
-            link.click();
+
+        async function downloadImage() {
+            // You can implement image download logic here
+            // For example, create a download link or use a library like FileSaver.js
+            // For simplicity, let's just log a message for now
+            console.log('Download image logic to be implemented.');
         }
     </script>
+</body>
+</html>
 </body>
 </html>
