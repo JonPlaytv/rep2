@@ -58,8 +58,6 @@ def queue_status():
 
 
 if __name__ == '__main__':
-    # Debug/Development
-    # app.run(debug=True, host="0.0.0.0", port="5000")
-    # Production
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
-    http_server.serve_forever()
+    # app.run(debug=True, host="0.0.0.0", port=5000)  # Remove this line
+    gunicorn_command = "gunicorn -w 4 -b 0.0.0.0:5000 app:app"  # Adjust workers as needed
+    os.system(gunicorn_command)
